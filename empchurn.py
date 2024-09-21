@@ -104,6 +104,6 @@ if st.sidebar.button("Predict"):
 else:
     st.markdown("<h4 style='color: #2196F3;'>Please enter employee details in the sidebar and press 'Predict'.</h4>", unsafe_allow_html=True)
 
+ with open('churn_pickle', 'rb') as f:
+    model = pickle.load(f)
 
-  with open('churn_pickle', 'rb') as f:
-    np = pickle.load(f)
