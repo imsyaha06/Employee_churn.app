@@ -105,7 +105,5 @@ else:
     st.markdown("<h4 style='color: #2196F3;'>Please enter employee details in the sidebar and press 'Predict'.</h4>", unsafe_allow_html=True)
 
 
-with open('churn_pickle', 'wb') as f:
-    pickle.dump(model,f)
   with open('churn_pickle', 'rb') as f:
     np = pickle.load(f)
