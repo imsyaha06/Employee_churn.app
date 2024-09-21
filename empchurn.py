@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import pickle
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
@@ -102,3 +103,9 @@ if st.sidebar.button("Predict"):
         st.markdown("<h3 style='color: #4CAF50;'>The employee is likely to stay in the company.</h3>", unsafe_allow_html=True)
 else:
     st.markdown("<h4 style='color: #2196F3;'>Please enter employee details in the sidebar and press 'Predict'.</h4>", unsafe_allow_html=True)
+
+
+with open('churn_pickle', 'wb') as f:
+    pickle.dump(model,f)
+  with open('churn_pickle', 'rb') as f:
+    np = pickle.load(f)
