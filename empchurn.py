@@ -1,100 +1,93 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import sklearn
-import pickle
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-label_encoder = LabelEncoder()
-scaler = StandardScaler()
+import joblib
+from sklearn.preprocessing import MinMaxScaler
 
-model = pickle.load(open('7 logistic_model.pkl','rb'))
-df = pd.read_csv("churn_data.csv")
+# Load saved logistic regression model and scaler
+model = joblib.load('logistic_regression_model.joblib')
+scaler = joblib.load('scaler_churn.joblib')
 
-st.title("Employee Churn Prediction")
-gender = st.selectbox("Select Gender",options=['Female','Male'])
-SeniorCitizen = st.selectbox("Are you a senior citizen?", options=['Yes','No'])
-Partner = st.selectbox("Do you have partner?", options=['Yes','No'])
-Dependents	 = st.selectbox("Are you dependent on others?", options=['Yes','No'])
-tenure = st.text_input("Enter Your tenure in months")
-PhoneService = st.selectbox("Do have phone service?",options=['Yes','No'])
-MultipleLines = st.selectbox("Do you have mutlilines servics?", options=['Yes','No','no phone service'])
-Contract = st.selectbox("Your Contract?",options=['One year','Two year','Month-to_month'])
-TotalCharges = st.text_input("Enter your Total charges?")
+# Define feature columns used in training (ensure the same order)
+feature_columns = [
+    'gender', 'SeniorCitizen', 'Partner', 'Dependents', 'tenure', 'PhoneService',
+    'MultipleLines', 'OnlineSecurity', 'OnlineBackup', 'DeviceProtection',
+    'TechSupport', 'StreamingTV', 'StreamingMovies', 'PaperlessBilling', 
+    'MonthlyCharges', 'TotalCharges', 'InternetService_DSL', 'InternetService_Fiber optic',
+    'InternetService_No', 'Contract_Month-to-month', 'Contract_One year', 
+    'Contract_Two year', 'PaymentMethod_Bank transfer (automatic)', 
+    'PaymentMethod_Credit card (automatic)', 'PaymentMethod_Electronic check',
+    'PaymentMethod_Mailed check'
+]
 
+# Streamlit app title
+st.title('Customer Churn Prediction')
 
-def prediction(gender,Seniorcitizen,Partner,Dependents,tenure,Phoneservice,multiline,contact,totalcharge):
-    data = {
-    'gender': [gender],
-    'SeniorCitizen': [Seniorcitizen],
-    'Partner': [Partner],
-    'Dependents': [Dependents],
-    'tenure': [tenure],
-    'PhoneService': [Phoneservice],
-    'MultipleLines': [multiline],
-    'Contract': [contact],
-    'TotalCharges': [totalcharge]
-    }
-    # Create a DataFrame from the dictionary
-    df = pd.DataFrame(data)
+# Input fields for user to enter data
+gender = st.selectbox('Gender', ['Female', 'Male'])
+SeniorCitizen = st.selectbox('Senior Citizen (Yes = 1 & No = 0)', [0, 1])
+Partner = st.selectbox('Partner', ['No', 'Yes'])
+Dependents = st.selectbox('Dependents', ['No', 'Yes'])
+tenure = st.slider('Tenure', 0, 72, 1)
+PhoneService = st.selectbox('Phone Service', ['No', 'Yes'])
+MultipleLines = st.selectbox('Multiple Lines', ['No', 'Yes'])
+OnlineSecurity = st.selectbox('Online Security', ['No', 'Yes'])
+OnlineBackup = st.selectbox('Online Backup', ['No', 'Yes'])
+DeviceProtection = st.selectbox('Device Protection', ['No', 'Yes'])
+TechSupport = st.selectbox('Tech Support', ['No', 'Yes'])
+StreamingTV = st.selectbox('Streaming TV', ['No', 'Yes'])
+StreamingMovies = st.selectbox('Streaming Movies', ['No', 'Yes'])
+PaperlessBilling = st.selectbox('Paperless Billing', ['No', 'Yes'])
+MonthlyCharges = st.number_input('Monthly Charges', min_value=0.0, max_value=150.0, step=0.1)
+TotalCharges = st.number_input('Total Charges', min_value=0.0, max_value=10000.0, step=0.1)
+InternetService = st.selectbox('Internet Service', ['DSL', 'Fiber optic', 'No'])
+Contract = st.selectbox('Contract', ['Month-to-month', 'One year', 'Two year'])
+PaymentMethod = st.selectbox('Payment Method', ['Bank transfer (automatic)', 'Credit card (automatic)', 'Electronic check', 'Mailed check'])
 
-
-    # Encode the categorical columns
-    categorical_columns = ['gender', 'SeniorCitizen', 'Partner', 'Dependents', 'PhoneService', 'MultipleLines', 'Contract']
-    for column in categorical_columns:
-        df[column] = label_encoder.fit_transform(df[column])
-    df = scaler.fit_transform(df)
-
-    result = model.predict(df).reshape(1,-1)
-    return result[0]
-
-
-
-# Tips for Churn Prevention
-churn_tips_data = {
-    "Tips for Churn Prevention": [
-        "Identify the Reasons: Understand why customers or employees are leaving. Conduct surveys, interviews, or exit interviews to gather feedback and identify common issues or pain points.",
-        "Improve Communication: Maintain open and transparent communication channels. Address concerns promptly and proactively. Make sure customers or employees feel heard and valued.",
-        "Enhance Customer/Employee Experience: Focus on improving the overall experience. This could involve improving product/service quality or creating a more positive work environment for employees.",
-        "Offer Incentives: Provide incentives or loyalty programs to retain customers. For employees, consider benefits, bonuses, or career development opportunities.",
-        "Personalize Interactions: Tailor interactions and offers to individual needs and preferences. Personalization can make customers or employees feel more connected and valued.",
-        "Monitor Engagement: Continuously track customer or employee engagement. For customers, this might involve monitoring product usage or website/app activity. For employees, assess job satisfaction and engagement levels.",
-        "Predictive Analytics: Use data and predictive analytics to anticipate churn. Machine learning models can help identify patterns and predict which customers or employees are most likely to churn.",
-        "Feedback Loop: Create a feedback loop for ongoing improvement. Regularly seek feedback, analyze it, and use it to make informed decisions and changes.",
-        "Employee Training and Development: Invest in training and development programs for employees. Opportunities for growth and skill development can improve job satisfaction and loyalty.",
-        "Competitive Analysis: Stay aware of what competitors are offering. Ensure your products, services, and workplace environment remain competitive in the market."
-    ]
+# Convert inputs to the format used in training
+data = {
+    'gender': 1 if gender == 'Female' else 0,
+    'SeniorCitizen': SeniorCitizen,
+    'Partner': 1 if Partner == 'Yes' else 0,
+    'Dependents': 1 if Dependents == 'Yes' else 0,
+    'tenure': tenure,
+    'PhoneService': 1 if PhoneService == 'Yes' else 0,
+    'MultipleLines': 1 if MultipleLines == 'Yes' else 0,
+    'OnlineSecurity': 1 if OnlineSecurity == 'Yes' else 0,
+    'OnlineBackup': 1 if OnlineBackup == 'Yes' else 0,
+    'DeviceProtection': 1 if DeviceProtection == 'Yes' else 0,
+    'TechSupport': 1 if TechSupport == 'Yes' else 0,
+    'StreamingTV': 1 if StreamingTV == 'Yes' else 0,
+    'StreamingMovies': 1 if StreamingMovies == 'Yes' else 0,
+    'PaperlessBilling': 1 if PaperlessBilling == 'Yes' else 0,
+    'MonthlyCharges': MonthlyCharges,
+    'TotalCharges': TotalCharges,
+    'InternetService_DSL': 1 if InternetService == 'DSL' else 0,
+    'InternetService_Fiber optic': 1 if InternetService == 'Fiber optic' else 0,
+    'InternetService_No': 1 if InternetService == 'No' else 0,
+    'Contract_Month-to-month': 1 if Contract == 'Month-to-month' else 0,
+    'Contract_One year': 1 if Contract == 'One year' else 0,
+    'Contract_Two year': 1 if Contract == 'Two year' else 0,
+    'PaymentMethod_Bank transfer (automatic)': 1 if PaymentMethod == 'Bank transfer (automatic)' else 0,
+    'PaymentMethod_Credit card (automatic)': 1 if PaymentMethod == 'Credit card (automatic)' else 0,
+    'PaymentMethod_Electronic check': 1 if PaymentMethod == 'Electronic check' else 0,
+    'PaymentMethod_Mailed check': 1 if PaymentMethod == 'Mailed check' else 0
 }
 
-# Tips for Customer Retention (Not Churning)
-retention_tips_data = {
-    "Tips for Customer Retention": [
-        "Provide Exceptional Customer Service: Ensure that customers receive excellent customer service and support.",
-        "Create Loyalty Programs: Reward loyal customers with discounts, special offers, or exclusive access to products/services.",
-        "Regularly Communicate with Customers: Keep customers informed about updates, new features, and promotions.",
-        "Offer High-Quality Products/Services: Consistently deliver high-quality products or services that meet customer needs.",
-        "Resolve Issues Quickly: Address customer concerns and issues promptly to maintain their satisfaction.",
-        "Build Strong Customer Relationships: Develop strong relationships with customers by understanding their needs and preferences.",
-        "Provide Value: Offer value-added services or content that keeps customers engaged and interested.",
-        "Simplify Processes: Make it easy for customers to do business with you. Simplify processes and reduce friction.",
-        "Stay Responsive: Be responsive to customer inquiries and feedback, even on social media and review platforms.",
-        "Show Appreciation: Express gratitude to loyal customers and acknowledge their continued support."
-    ]
-}
+# Convert input data to DataFrame
+input_data = pd.DataFrame([data])
 
-# Create DataFrames
-churn_tips_df = pd.DataFrame(churn_tips_data)
-retention_tips_df = pd.DataFrame(retention_tips_data)
+# Scale the numerical columns
+cols_to_scale = ['tenure', 'MonthlyCharges', 'TotalCharges']
+input_data[cols_to_scale] = scaler.transform(input_data[cols_to_scale])
 
-if st.button("Predict churn or not"):
-    result = prediction(gender, SeniorCitizen, Partner, Dependents, tenure, PhoneService, MultipleLines, Contract,TotalCharges)
-    if result == 1:
-        st.title("Churn")
-        # st.write("Here are 10 tips for Churn Prevention:")
-        # st.dataframe(churn_tips_df, height=400,width=600)
-    else:
-        st.title('Not Churn')
-        # st.write("Here are 10 tips for Customer Retention (Not Churning):")
-        # st.dataframe(retention_tips_df, height=400,width=400)
-        
-        
+# Predict churn probability
+if st.button('Predict'):
+    prediction = model.predict(input_data)
+    churn_prob = model.predict_proba(input_data)[0][1]
     
+    if prediction == 1:
+        st.write(f"Prediction: Churn with a probability of {churn_prob:.2f}.")
+    else:
+        st.write(f"Prediction: Not Churn with a probability of {1 - churn_prob:.2f}.")
+
