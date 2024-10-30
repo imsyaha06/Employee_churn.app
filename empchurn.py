@@ -4,6 +4,12 @@ import numpy as np
 import joblib
 from sklearn.preprocessing import MinMaxScaler
 
+st.set_page_config(
+    page_title="Employee Churn Prediction",
+    page_icon="🏢",  # Use the emoji directly
+    layout="centered"  # Optional; defaults to centered
+)
+
 # Load saved logistic regression model and scaler
 model = joblib.load('logistic_regression_model.joblib')
 scaler = joblib.load('scaler_churn.joblib')
