@@ -27,7 +27,7 @@ feature_columns = [
 ]
 
 # Streamlit app title
-st.title('Employee Churn Prediction')
+st.title('Customer Churn Prediction')
 
 # Input fields for user to enter data
 gender = st.selectbox('Gender', ['Female', 'Male'])
